@@ -1,5 +1,5 @@
 {
-    "domain": "",
+    "domain": "birthdays",
     "name": "Birthdays",
     "documentation": "https://github.com/Miicroo/homeassistant-custom-components/tree/master/birthdays",
     "dependencies": [],
