@@ -28,7 +28,7 @@ birthdays:
     date_of_birth: 1935-01-08
     icon: 'mdi:music'
 ~~~~
-4. Restart homeassistant
+Restart homeassistant
 
 ## Entities
 All entities are exposed using the format `birthdays.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be changed. For instance `Frodo Baggins` will get entity_id `frodo_baggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `sven_goran_eriksson`.
