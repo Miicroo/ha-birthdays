@@ -1,11 +1,22 @@
 # Birthdays
 This is a HomeAssistant component for tracking birthdays, where the state of each birthday is equal to how many days are left. All birthdays are updated at midnight.
 
-## How to setup
+## Installation
 
-1. In your homeassistant config directory, create a new python file. The path should look like this: **my-ha-config-dir/custom_components/birthdays.py**
-2. Copy the contents of birthdays.py in this git-repo to your newly created file in HA
-3. Set up the component:
+### HACS (recommended)
+1. Go to integrations
+2. Press the dotted menu in the top right corner
+3. Choose custom repositories
+4. Add the URL to this repository
+5. Choose category `Integration`
+6. Click add
+
+### Manual
+1. In your homeassistant config directory, create a new directory. The path should look like this: **my-ha-config-dir/custom_components
+2. Copy the contents of /custom_components in this git-repo to your newly created directory in HA
+
+## Set up
+Set up the component:
 ~~~~
 # Example configuration.yaml entry
 birthdays:
@@ -20,7 +31,7 @@ birthdays:
 4. Restart homeassistant
 
 ## Entities
-All entities are exposed using the format `birthday.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be removed. For instance `Frodo Baggins` will get entity_id `FrodoBaggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `SvenGranEriksson`.
+All entities are exposed using the format `birthdays.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be changed. For instance `Frodo Baggins` will get entity_id `frodo_baggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `sven_goran_eriksson`.
 
 ## Automation
 All birthdays are updated at midnight, and when a birthday occurs an event is sent on the HA bus that can be used for automations. The event is called `birthday` and contains the data `name` and `age`. Note that there will be two events fired if two persons have the same birthday.
@@ -62,7 +73,7 @@ I use the birthdays as a simple entity list in lovelace, given the above example
   title: Birthdays
   show_header_toggle: false
   entities:
-    - birthday.frodo_baggins
-    - birthday.bilbo_baggins
-    - birthday.elvis
+    - birthdays.frodo_baggins
+    - birthdays.bilbo_baggins
+    - birthdays.elvis
 ~~~
