@@ -82,7 +82,7 @@ class BirthdayEntity(Entity):
         return self._icon
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
             'age_at_next_birthday': self._age_at_next_birthday,
