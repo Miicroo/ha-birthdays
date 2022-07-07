@@ -43,7 +43,7 @@ async def async_setup(hass, config):
 
 
     tasks = [device.update_data() for device in devices]
-    await asyncio.wait(tasks, loop=hass.loop)
+    await asyncio.wait(tasks)
 
     return True
 
