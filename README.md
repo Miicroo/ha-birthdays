@@ -65,7 +65,7 @@ automation:
         message: "{{ trigger.event.data.name }} turns {{ trigger.event.data.age }} today!"
 ~~~
 
-If you want to have a notification sent to you at a specific time (instead of midnight, you can use a custom templated sensor and a time trigger.
+If you want to have a notification sent to you at a specific time (instead of midnight), you can use a custom templated sensor and a time trigger.
 Create the sensor:
 ~~~
 sensor:
