@@ -65,6 +65,62 @@ automation:
         message: "{{ trigger.event.data.name }} turns {{ trigger.event.data.age }} today!"
 ~~~
 
+If you want to have a notification sent to you at a specific time (instead of midnight, you can use a custom templated sensor and a time trigger.
+Create the sensor:
+~~~
+  sensor:
+    - platform: template
+	  sensors:
+	    next_birthday:
+	      friendly_name: "Next birthday"
+	      value_template: >
+	        {%- set ns = namespace(days=365) -%}
+	        {%- for birthday in states.birthdays -%}
+	          {%- set daysLeft = birthday.state | int -%}
+	          {%- if daysLeft < ns.days -%}
+	            {%- set ns.days = daysLeft -%}
+	          {%- endif -%}
+	        {%- endfor -%}
+	        {{ ns.days }}
+	      attribute_templates:
+	        name: >
+	          {%- set ns = namespace(days=365, name='') -%}
+	          {%- for birthday in states.birthdays -%}
+	            {%- set daysLeft = birthday.state | int -%}
+	            {%- if daysLeft < ns.days -%}
+	              {%- set ns.days = daysLeft -%}
+	              {%- set ns.name = birthday.attributes.friendly_name -%}
+	            {%- endif -%}
+	          {%- endfor -%}
+	          {{ ns.name }}
+	        age: >
+	          {%- set ns = namespace(days=365, age=0) -%}
+	          {%- for birthday in states.birthdays -%}
+	            {%- set daysLeft = birthday.state | int -%}
+	            {%- if daysLeft < ns.days -%}
+	              {%- set ns.days = daysLeft -%}
+	              {%- set ns.age = birthday.attributes.age_at_next_birthday -%}
+	            {%- endif -%}
+	          {%- endfor -%}
+	          {{ ns.age }
+~~~
+and the automation:
+~~~
+automation:
+  trigger:
+    platform: time
+    at: "19:00:00"
+  condition:
+    condition: state
+    entity_id: sensor.next_birthday
+    state: 0
+  action:
+    service: notify.pushbullet
+    data_template:
+      title: 'Birthday!'
+      message: "{{ state_attr('state.next_birthday', 'name') }} turns {{ state_attr('state.next_birthday', 'age') }} today!"
+~~~
+
 ## Lovelace UI
 I use the birthdays as a simple entity list in lovelace, given the above example I use:
 ~~~
