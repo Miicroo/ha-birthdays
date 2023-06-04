@@ -122,5 +122,5 @@ class BirthdayEntity(Entity):
             # Fire event if birthday is today
             self.hass.bus.async_fire(event_type='birthday', event_data={'name': self._name, 'age': self._age_at_next_birthday})
 
-        await self.async_write_ha_state()
+        self.async_write_ha_state()
         async_call_later(self.hass, self._get_seconds_until_midnight(), self.update_data)
