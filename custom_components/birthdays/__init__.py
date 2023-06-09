@@ -42,7 +42,7 @@ async def async_setup(hass, config):
     await component.async_add_entities(devices)
 
 
-    tasks = [device.update_data() for device in devices]
+    tasks = [asyncio.create_task(device.update_data()) for device in devices]
     await asyncio.wait(tasks)
 
     return True
