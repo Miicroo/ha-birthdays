@@ -15,12 +15,14 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
+CONF_UNIQUE_ID = 'unique_id'
 CONF_ICON = 'icon'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
     vol.Required(CONF_DATE_OF_BIRTH): cv.date,
+    vol.Optional(CONF_UNIQUE_ID, default=None): cv.string,
     vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
 })
 
@@ -35,8 +37,9 @@ async def async_setup(hass, config):
     for birthday_data in config[DOMAIN]:
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
+        unique_id = birthday_data[CONF_UNIQUE_ID]
         icon = birthday_data[CONF_ICON]
-        devices.append(BirthdayEntity(name, date_of_birth, icon, hass))
+        devices.append(BirthdayEntity(name, date_of_birth, unique_id, icon, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
@@ -50,14 +53,19 @@ async def async_setup(hass, config):
 
 class BirthdayEntity(Entity):
 
-    def __init__(self, name, date_of_birth, icon, hass):
+    def __init__(self, name, date_of_birth, unique_id, icon, hass):
         self._name = name
         self._date_of_birth = date_of_birth
+
+        if unique_id != None:
+            self._unique_id = slugify(unique_id)
+        else: 
+            self._unique_id = slugify(name)
+
         self._icon = icon
         self._age_at_next_birthday = 0
         self._state = None
-        name_in_entity_id = slugify(name)
-        self.entity_id = 'birthday.{}'.format(name_in_entity_id)
+        self._entity_id = 'birthday.{}'.format(self._unique_id)
         self.hass = hass
 
     @property
@@ -66,7 +74,7 @@ class BirthdayEntity(Entity):
 
     @property
     def unique_id(self):
-        return '{}.{}'.format(self.entity_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
+        return '{}.{}'.format(self._entity_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
 
     @property
     def state(self):
