@@ -22,7 +22,7 @@ DOMAIN = 'birthdays'
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
     vol.Required(CONF_DATE_OF_BIRTH): cv.date,
-    vol.Optional(CONF_UNIQUE_ID, default=None): cv.string,
+    vol.Optional(CONF_UNIQUE_ID, default="None"): cv.string,
     vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
 })
 
@@ -57,7 +57,7 @@ class BirthdayEntity(Entity):
         self._name = name
         self._date_of_birth = date_of_birth
 
-        if unique_id != None:
+        if unique_id != "None":
             self._unique_id = slugify(unique_id)
         else: 
             self._unique_id = slugify(name)
