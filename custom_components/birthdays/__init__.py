@@ -60,7 +60,6 @@ class BirthdayEntity(Entity):
 
     def __init__(self, name, date_of_birth, unique_id, icon, attributes, hass):
         self._name = name
-        self._date_of_birth = date_of_birth
 
         if unique_id is not None:
             self._unique_id = slugify(unique_id)
@@ -68,6 +67,7 @@ class BirthdayEntity(Entity):
             self._unique_id = slugify(name)
 
         self._icon = icon
+        self._date_of_birth = date_of_birth
         self._age_at_next_birthday = 0
         self._state = None
         self._entity_id = 'birthday.{}'.format(self._unique_id)
@@ -78,6 +78,7 @@ class BirthdayEntity(Entity):
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
         }
 
+        self._extra_state_attributes = {}
         if len(attributes) > 0 and attributes is not None:
             for k,v in attributes.items():
                 self._extra_state_attributes[k] = v
@@ -137,12 +138,16 @@ class BirthdayEntity(Entity):
 
         days_until_next_birthday = (next_birthday-today).days
 
-        self._age_at_next_birthday = next_birthday.year - self._date_of_birth.year
+        age = next_birthday.year - self._date_of_birth.year
+        self._age_at_next_birthday = age
+        self._extra_state_attributes['age_at_next_birthday'] = age
+
+        
         self._state = days_until_next_birthday
 
         if days_until_next_birthday == 0:
             # Fire event if birthday is today
-            self.hass.bus.async_fire(event_type='birthday', event_data={'name': self._name, 'age': self._age_at_next_birthday})
+            self.hass.bus.async_fire(event_type='birthday', event_data={'name': self._name, 'age': age})
 
         self.async_write_ha_state()
         async_call_later(self.hass, self._get_seconds_until_midnight(), self.update_data)
