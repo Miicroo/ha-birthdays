@@ -13,9 +13,10 @@ from homeassistant.util import slugify
 
 _LOGGER = logging.getLogger(__name__)
 
+CONF_UNIQUE_ID = 'unique_id'
 CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
-CONF_UNIQUE_ID = 'unique_id'
+CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
 DOMAIN = 'birthdays'
@@ -68,17 +69,14 @@ class BirthdayEntity(Entity):
 
         self._icon = icon
         self._date_of_birth = date_of_birth
-        self._age_at_next_birthday = 0
-        self._state = None
-        self._entity_id = 'birthday.{}'.format(self._unique_id)
+        self._entity_id = '{}.{}'.format(DOMAIN, self._unique_id)
         self.hass = hass
 
         self._extra_state_attributes = {
-            'age_at_next_birthday': self._age_at_next_birthday,
+            CONF_AGE_AT_NEXT_BIRTHDAY: int(self._age_at_next_birthday),
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
         }
 
-        self._extra_state_attributes = {}
         if len(attributes) > 0 and attributes is not None:
             for k,v in attributes.items():
                 self._extra_state_attributes[k] = v
