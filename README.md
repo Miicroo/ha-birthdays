@@ -32,9 +32,10 @@ birthdays:
     date_of_birth: 1920-05-25
     icon: 'mdi:pistol'
     attributes:
-      category: "Agent"
+      occupation: "Agent"
       license_to_kill: "Yes"
-  - name: 'Albert Einstein'
+  - unique_id: einstein
+    name: 'Albert Einstein'
     date_of_birth: 1879-03-14
     icon: 'mdi:lightbulb-on'
     attributes:
@@ -50,6 +51,7 @@ All entities are exposed using the format `birthdays.{name}`. Any character that
 ## Custom attributes
 You can add custom attributes to each birthday, for instance to add an icon or other metadata.
 To do this, add a dictionary under the `attributes` key in the configuration (see example above). The dictionary can contain any key-value pairs you want, and will be exposed as attributes on the entity.
+Fetching the attributes can be done using the `attributes` property in a template, for instance `{{ states.birthdays.einstein.attributes.occupation }}` will return `Theoretical physicist`.
 
 ## Automation
 All birthdays are updated at midnight, and when a birthday occurs an event is sent on the HA bus that can be used for automations. The event is called `birthday` and contains the data `name` and `age`. Note that there will be two events fired if two persons have the same birthday.
