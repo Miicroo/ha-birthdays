@@ -16,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 CONF_UNIQUE_ID = 'unique_id'
 CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
+CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
 DOMAIN = 'birthdays'
@@ -23,6 +24,7 @@ DOMAIN = 'birthdays'
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
     vol.Required(CONF_DATE_OF_BIRTH): cv.date,
+    vol.Optional(CONF_AGE_AT_NEXT_BIRTHDAY, default=None): cv.positive_int,
     vol.Optional(CONF_UNIQUE_ID, default=None): cv.string,
     vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
     vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
@@ -39,10 +41,11 @@ async def async_setup(hass, config):
     for birthday_data in config[DOMAIN]:
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
+        age_at_next_birthday = birthday_data[CONF_AGE_AT_NEXT_BIRTHDAY]
         unique_id = birthday_data[CONF_UNIQUE_ID]
         icon = birthday_data[CONF_ICON]
         attributes = birthday_data[CONF_ATTRIBUTES]
-        devices.append(BirthdayEntity(name, date_of_birth, unique_id, icon, attributes, hass))
+        devices.append(BirthdayEntity(name, date_of_birth, age_at_next_birthday, unique_id, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
@@ -58,7 +61,7 @@ async def async_setup(hass, config):
 
 class BirthdayEntity(Entity):
 
-    def __init__(self, name, date_of_birth, unique_id, icon, attributes, hass):
+    def __init__(self, unique_id, name, date_of_birth, age_at_next_birthday, icon, attributes, hass):
         self._name = name
 
         if unique_id is not None:
@@ -68,20 +71,18 @@ class BirthdayEntity(Entity):
 
         self._icon = icon
         self._date_of_birth = date_of_birth
+        self._age_at_next_birthday = age_at_next_birthday
         self._entity_id = '{}.{}'.format(DOMAIN, self._unique_id)
         self.hass = hass
 
         self._extra_state_attributes = {
-            'age_at_next_birthday': self._age_at_next_birthday,
+            CONF_AGE_AT_NEXT_BIRTHDAY: int(self._age_at_next_birthday),
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
         }
 
         if len(attributes) > 0 and attributes is not None:
             for k,v in attributes.items():
                 self._extra_state_attributes[k] = v
-
-        # if not hasattr(self,'_extra_state_attributes'):
-        #     setattr(self, '_extra_state_attributes', _extra_state_attributes)
 
     @property
     def name(self):
