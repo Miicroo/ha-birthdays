@@ -16,7 +16,6 @@ _LOGGER = logging.getLogger(__name__)
 CONF_UNIQUE_ID = 'unique_id'
 CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
-CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
 DOMAIN = 'birthdays'
@@ -73,7 +72,7 @@ class BirthdayEntity(Entity):
         self.hass = hass
 
         self._extra_state_attributes = {
-            CONF_AGE_AT_NEXT_BIRTHDAY: int(self._age_at_next_birthday),
+            'age_at_next_birthday': self._age_at_next_birthday,
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
         }
 
