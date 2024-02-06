@@ -27,11 +27,29 @@ birthdays:
   - name: Elvis
     date_of_birth: 1935-01-08
     icon: 'mdi:music'
+  - unique_id: bond_james_bond
+    name: James Bond
+    date_of_birth: 1920-05-25
+    icon: 'mdi:pistol'
+    attributes:
+      category: "Agent"
+      license_to_kill: "Yes"
+  - name: 'Albert Einstein'
+    date_of_birth: 1879-03-14
+    icon: 'mdi:lightbulb-on'
+    attributes:
+      occupation: 'Theoretical physicist'
+      iq: 'Genius level'
+      sense_of_humor: 'Einsteinian'
 ~~~~
 Restart homeassistant
 
 ## Entities
 All entities are exposed using the format `birthdays.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be changed. For instance `Frodo Baggins` will get entity_id `frodo_baggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `sven_goran_eriksson`.
+
+## Custom attributes
+You can add custom attributes to each birthday, for instance to add an icon or other metadata.
+To do this, add a dictionary under the `attributes` key in the configuration (see example above). The dictionary can contain any key-value pairs you want, and will be exposed as attributes on the entity.
 
 ## Automation
 All birthdays are updated at midnight, and when a birthday occurs an event is sent on the HA bus that can be used for automations. The event is called `birthday` and contains the data `name` and `age`. Note that there will be two events fired if two persons have the same birthday.
