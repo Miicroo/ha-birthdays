@@ -74,7 +74,6 @@ class BirthdayEntity(Entity):
 
         self._extra_state_attributes = {
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
-            CONF_AGE_AT_NEXT_BIRTHDAY: self._age_at_next_birthday,
         }
 
         if len(attributes) > 0 and attributes is not None:
