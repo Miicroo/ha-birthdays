@@ -59,7 +59,7 @@ async def async_setup(hass, config):
 
 class BirthdayEntity(Entity):
 
-    def __init__(self, unique_id, name, date_of_birth, icon, attributes, age_at_next_birthday, hass):
+    def __init__(self, unique_id, name, date_of_birth, icon, attributes, hass):
         self._name = name
 
         if unique_id is not None:
