@@ -86,7 +86,7 @@ class BirthdayEntity(Entity):
 
     @property
     def unique_id(self):
-        return '{}.{}'.format(self._entity_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
+        return '{}.{}'.format(self._unique_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
 
     @property
     def state(self):
