@@ -70,7 +70,6 @@ class BirthdayEntity(Entity):
         self._state                = None
         self._icon                 = icon
         self._date_of_birth        = date_of_birth
-        self._age_at_next_birthday = age_at_next_birthday
         self.hass                  = hass
 
         self._extra_state_attributes = {
