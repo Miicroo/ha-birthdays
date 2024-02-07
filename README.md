@@ -27,6 +27,10 @@ birthdays:
   - name: Elvis
     date_of_birth: 1935-01-08
     icon: 'mdi:music'
+```
+
+You can also add a custom `unique_id` and attributes to each birthday, for instance to add an icon or other metadata.
+```yaml
   - unique_id: bond_james_bond
     name: James Bond
     date_of_birth: 1920-05-25
@@ -46,12 +50,12 @@ birthdays:
 Restart homeassistant
 
 ## Entities
-All entities are exposed using the format `birthdays.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be changed. For instance `Frodo Baggins` will get entity_id `frodo_baggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `sven_goran_eriksson`.
+All entities that do not have a specified `unique_id` are exposed using the format `birthdays.{name}`. Any character that does not fit the pattern `a-z`, `A-Z`, `0-9`, or `_` will be changed. For instance `Frodo Baggins` will get entity_id `frodo_baggins`, and Swedish names like [`Sven-Göran Eriksson`](https://sv.wikipedia.org/wiki/Sven-G%C3%B6ran_Eriksson) will get entity_id `sven_goran_eriksson`.
 
 ## Custom attributes
-You can add custom attributes to each birthday, for instance to add an icon or other metadata.
+You can add a unique id and custom attributes to each birthday, for instance to add an icon or other metadata.
 To do this, add a dictionary under the `attributes` key in the configuration (see example above). The dictionary can contain any key-value pairs you want, and will be exposed as attributes on the entity.
-Fetching the attributes can be done using the `attributes` property in a template, for instance `{{ states.birthdays.einstein.attributes.occupation }}` will return `Theoretical physicist`.
+Fetching the attributes can be done using `state_attr` in a template, for instance `{{ state_attr('birthdays.einstein', 'occupation') }}` will return `Theoretical physicist`.
 
 ## Automation
 All birthdays are updated at midnight, and when a birthday occurs an event is sent on the HA bus that can be used for automations. The event is called `birthday` and contains the data `name` and `age`. Note that there will be two events fired if two persons have the same birthday.
@@ -87,7 +91,7 @@ automation:
 
 If you want to have a notification sent to you at a specific time (instead of midnight), you can use a custom templated sensor and a time trigger.
 Create the sensor:
-```yaml
+~~~
 sensor:
   - platform: template
     sensors:
@@ -128,7 +132,7 @@ sensor:
               {%- endif -%}
             {%- endfor -%}
             {{ ns.age }}
-```
+~~~
 and the automation:
 ```yaml
 automation:

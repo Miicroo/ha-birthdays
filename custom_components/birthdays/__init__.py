@@ -27,7 +27,6 @@ BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_DATE_OF_BIRTH): cv.date,
     vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
     vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
-    vol.Optional(CONF_AGE_AT_NEXT_BIRTHDAY, default=1): cv.positive_int,
 })
 
 CONFIG_SCHEMA = vol.Schema({
@@ -45,7 +44,7 @@ async def async_setup(hass, config):
         icon                 = birthday_data[CONF_ICON]
         attributes           = birthday_data[CONF_ATTRIBUTES]
         age_at_next_birthday = birthday_data[CONF_AGE_AT_NEXT_BIRTHDAY]
-        devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, age_at_next_birthday, hass))
+        devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
@@ -73,7 +72,6 @@ class BirthdayEntity(Entity):
         self._icon                 = icon
         self._date_of_birth        = date_of_birth
         self._age_at_next_birthday = age_at_next_birthday
-        self._entity_id            = '{}.{}'.format(DOMAIN, self._unique_id)
         self.hass                  = hass
 
         self._extra_state_attributes = {
@@ -138,7 +136,6 @@ class BirthdayEntity(Entity):
         days_until_next_birthday = (next_birthday-today).days
 
         age = next_birthday.year - self._date_of_birth.year
-        self._age_at_next_birthday = age
         self._extra_state_attributes[CONF_AGE_AT_NEXT_BIRTHDAY] = age
 
         
