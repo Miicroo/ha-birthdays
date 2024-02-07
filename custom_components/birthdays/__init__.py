@@ -13,20 +13,20 @@ from homeassistant.util import slugify
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_UNIQUE_ID = 'unique_id'
-CONF_NAME = 'name'
-CONF_DATE_OF_BIRTH = 'date_of_birth'
-CONF_ICON = 'icon'
-CONF_ATTRIBUTES = 'attributes'
+CONF_UNIQUE_ID            = 'unique_id'
+CONF_NAME                 = 'name'
+CONF_DATE_OF_BIRTH        = 'date_of_birth'
+CONF_ICON                 = 'icon'
+CONF_ATTRIBUTES           = 'attributes'
 CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
-    vol.Optional(CONF_UNIQUE_ID, default=None): cv.string,
-    vol.Required(CONF_NAME): cv.string,
-    vol.Required(CONF_DATE_OF_BIRTH): cv.date,
-    vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
-    vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
+    vol.Optional(CONF_UNIQUE_ID, default  = None): cv.string,
+    vol.Required(CONF_NAME)               : cv.string,
+    vol.Required(CONF_DATE_OF_BIRTH)      : cv.date,
+    vol.Optional(CONF_ICON, default       = 'mdi : cake'): cv.string,
+    vol.Optional(CONF_ATTRIBUTES, default = {})  : vol.Schema({cv.string: cv.string}),
 })
 
 CONFIG_SCHEMA = vol.Schema({
