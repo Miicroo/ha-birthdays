@@ -43,7 +43,6 @@ async def async_setup(hass, config):
         date_of_birth        = birthday_data[CONF_DATE_OF_BIRTH]
         icon                 = birthday_data[CONF_ICON]
         attributes           = birthday_data[CONF_ATTRIBUTES]
-        age_at_next_birthday = birthday_data[CONF_AGE_AT_NEXT_BIRTHDAY]
         devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
