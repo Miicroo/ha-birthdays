@@ -22,7 +22,7 @@ CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
-    vol.Optional(CONF_UNIQUE_ID, default = None): cv.string,
+    vol.Optional(CONF_UNIQUE_ID): cv.string,
     vol.Required(CONF_NAME) : cv.string,
     vol.Required(CONF_DATE_OF_BIRTH) : cv.date,
     vol.Optional(CONF_ICON, default = 'mdi:cake'): cv.string,
@@ -38,7 +38,7 @@ async def async_setup(hass, config):
     devices = []
 
     for birthday_data in config[DOMAIN]:
-        unique_id = birthday_data[CONF_UNIQUE_ID]
+        unique_id = birthday_data.get(CONF_UNIQUE_ID)
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
         icon = birthday_data[CONF_ICON]
@@ -86,7 +86,7 @@ class BirthdayEntity(Entity):
 
     @property
     def unique_id(self):
-        return '{}.{}'.format(self._unique_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
+        return self._unique_id
 
     @property
     def state(self):
