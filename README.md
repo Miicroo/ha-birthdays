@@ -92,12 +92,11 @@ automation:
 If you want to have a notification sent to you at a specific time (instead of midnight), you can use a custom templated sensor and a time trigger.
 Create the sensor:
 ~~~
-sensor:
-  - platform: template
-    sensors:
-      next_birthday:
-        friendly_name: "Next birthday"
-        value_template: >
+template:
+  - sensor:
+      - name: "Next birthday"
+        unique_id: next_birthday
+        state: >
           {%- set ns = namespace(days=365) -%}
           {%- for birthday in states.birthdays -%}
             {%- set daysLeft = birthday.state | int -%}
@@ -121,7 +120,7 @@ sensor:
                 {%- set ns.names = ns.names + [birthday.attributes.friendly_name] -%}
               {%- endif -%}
             {%- endfor -%}
-
+  
             {{ns.names | join(', ')}}
           ages: >
             {%- set ns = namespace(days=365, ages=[]) -%}
@@ -131,7 +130,30 @@ sensor:
                 {%- set ns.days = daysLeft -%}
               {%- endif -%}
             {%- endfor -%}
-            {{ ns.age }}
+            {%- for birthday in states.birthdays -%}
+              {%- set daysLeft = birthday.state | int -%}
+              {%- if daysLeft == ns.days -%}
+                {%- set ns.ages = ns.ages + [birthday.attributes.age_at_next_birthday] -%}
+              {%- endif -%}
+            {%- endfor -%}
+  
+            {{ns.ages | join(', ')}}
+          birthday_message: >
+            {%- set ns = namespace(days=365, messages=[]) -%}
+            {%- for birthday in states.birthdays -%}
+              {%- set daysLeft = birthday.state | int -%}
+              {%- if daysLeft < ns.days -%}
+                {%- set ns.days = daysLeft -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- for birthday in states.birthdays -%}
+              {%- set daysLeft = birthday.state | int -%}
+              {%- if daysLeft == ns.days -%}
+                {%- set ns.messages = ns.messages + [birthday.attributes.friendly_name + ' fyller ' + (birthday.attributes.age_at_next_birthday | string) + ' idag!'] -%}
+              {%- endif -%}
+            {%- endfor -%}
+  
+            {{ns.messages | join('\n')}}
 ~~~
 and the automation:
 ```yaml
@@ -148,7 +170,7 @@ automation:
   - service: persistent_notification.create
     data_template:
       title: 'Birthday!'
-      message: "{{ state_attr('sensor.next_birthday', 'name') }} turns {{ state_attr('sensor.next_birthday', 'age') }} today!"
+      message: "{{ state_attr('sensor.next_birthday', 'birthday_message') }}"
 ```
 
 ## Lovelace UI
