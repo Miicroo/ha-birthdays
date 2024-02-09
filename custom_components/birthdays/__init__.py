@@ -13,15 +13,20 @@ from homeassistant.util import slugify
 
 _LOGGER = logging.getLogger(__name__)
 
+CONF_UNIQUE_ID = 'unique_id'
 CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
 CONF_ICON = 'icon'
+CONF_ATTRIBUTES = 'attributes'
+CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Required(CONF_DATE_OF_BIRTH): cv.date,
-    vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
+    vol.Optional(CONF_UNIQUE_ID): cv.string,
+    vol.Required(CONF_NAME) : cv.string,
+    vol.Required(CONF_DATE_OF_BIRTH) : cv.date,
+    vol.Optional(CONF_ICON, default = 'mdi:cake'): cv.string,
+    vol.Optional(CONF_ATTRIBUTES, default = {}) : vol.Schema({cv.string: cv.string}),
 })
 
 CONFIG_SCHEMA = vol.Schema({
@@ -33,10 +38,12 @@ async def async_setup(hass, config):
     devices = []
 
     for birthday_data in config[DOMAIN]:
+        unique_id = birthday_data.get(CONF_UNIQUE_ID)
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
         icon = birthday_data[CONF_ICON]
-        devices.append(BirthdayEntity(name, date_of_birth, icon, hass))
+        attributes = birthday_data[CONF_ATTRIBUTES]
+        devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
@@ -45,20 +52,33 @@ async def async_setup(hass, config):
     tasks = [asyncio.create_task(device.update_data()) for device in devices]
     await asyncio.wait(tasks)
 
+    _LOGGER.debug(devices)
+
     return True
 
 
 class BirthdayEntity(Entity):
 
-    def __init__(self, name, date_of_birth, icon, hass):
+    def __init__(self, unique_id, name, date_of_birth, icon, attributes, hass):
         self._name = name
-        self._date_of_birth = date_of_birth
-        self._icon = icon
-        self._age_at_next_birthday = 0
+
+        if unique_id is not None:
+            self._unique_id = slugify(unique_id)
+        else: 
+            self._unique_id = slugify(name)
+
         self._state = None
-        name_in_entity_id = slugify(name)
-        self.entity_id = 'birthday.{}'.format(name_in_entity_id)
+        self._icon = icon
+        self._date_of_birth = date_of_birth
         self.hass = hass
+
+        self._extra_state_attributes = {
+            CONF_DATE_OF_BIRTH: str(self._date_of_birth),
+        }
+
+        if len(attributes) > 0 and attributes is not None:
+            for k,v in attributes.items():
+                self._extra_state_attributes[k] = v
 
     @property
     def name(self):
@@ -66,7 +86,7 @@ class BirthdayEntity(Entity):
 
     @property
     def unique_id(self):
-        return '{}.{}'.format(self.entity_id, slugify(self._date_of_birth.strftime("%Y%m%d")))
+        return self._unique_id
 
     @property
     def state(self):
@@ -83,10 +103,7 @@ class BirthdayEntity(Entity):
 
     @property
     def extra_state_attributes(self):
-        return {
-            CONF_DATE_OF_BIRTH: str(self._date_of_birth),
-            'age_at_next_birthday': self._age_at_next_birthday,
-        }
+        return self._extra_state_attributes
 
     @property
     def unit_of_measurement(self):
@@ -115,12 +132,15 @@ class BirthdayEntity(Entity):
 
         days_until_next_birthday = (next_birthday-today).days
 
-        self._age_at_next_birthday = next_birthday.year - self._date_of_birth.year
+        age = next_birthday.year - self._date_of_birth.year
+        self._extra_state_attributes[CONF_AGE_AT_NEXT_BIRTHDAY] = age
+
+        
         self._state = days_until_next_birthday
 
         if days_until_next_birthday == 0:
             # Fire event if birthday is today
-            self.hass.bus.async_fire(event_type='birthday', event_data={'name': self._name, 'age': self._age_at_next_birthday})
+            self.hass.bus.async_fire(event_type='birthday', event_data={'name': self._name, 'age': age})
 
         self.async_write_ha_state()
         async_call_later(self.hass, self._get_seconds_until_midnight(), self.update_data)
