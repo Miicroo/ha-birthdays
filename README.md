@@ -185,3 +185,27 @@ I use the birthdays as a simple entity list in lovelace, given the above example
     - birthdays.bilbo_baggins
     - birthdays.elvis
 ```
+
+Another possibility is to use the auto-entities card. This allows you to sort the birthdays entered, an example:
+```
+type: custom:auto-entities
+show_empty: false
+card:
+  title: Verjaardagen
+  type: entities
+  card_mod:
+    style: |
+      #states > * {
+        margin: 0 !important;
+      }
+filter:
+  include:
+    - entity_id: birthdays*
+sort:
+  method: state
+  ignore_case: false
+  reverse: false
+  numeric: true
+```
+
+
