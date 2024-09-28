@@ -187,7 +187,7 @@ I use the birthdays as a simple entity list in lovelace, given the above example
 ```
 
 Another possibility is to use the auto-entities card. This allows you to sort the birthdays entered, an example:
-```
+```yaml
 # Example using auto-entities
 - type: custom:auto-entities
   show_empty: false
