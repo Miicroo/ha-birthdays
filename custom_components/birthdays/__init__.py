@@ -19,6 +19,7 @@ CONF_DATE_OF_BIRTH = 'date_of_birth'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
 CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
+CONF_DAYS_SINCE_BIRTH = 'days_since_birth'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
@@ -126,6 +127,9 @@ class BirthdayEntity(Entity):
 
         today = dt_util.start_of_local_day().date()
         next_birthday = date(today.year, self._date_of_birth.month, self._date_of_birth.day)
+
+        deltaSinceBirth = today - self._date_of_birth
+        self._extra_state_attributes[CONF_DAYS_SINCE_BIRTH] = deltaSinceBirth.days
 
         if next_birthday < today:
             next_birthday = next_birthday.replace(year=today.year + 1)
