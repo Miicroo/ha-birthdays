@@ -114,6 +114,10 @@ class BirthdayEntity(Entity):
         return self._extra_state_attributes
 
     @property
+    def date_of_birth(self):
+        return self._date_of_birth
+
+    @property
     def unit_of_measurement(self):
         return 'days'
 
