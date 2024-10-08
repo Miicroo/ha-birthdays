@@ -7,9 +7,8 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.template import is_template_string, Template, render_complex
-from homeassistant.util import dt as dt_util
-from homeassistant.util import slugify
+from homeassistant.helpers.template import Template, is_template_string, render_complex
+from homeassistant.util import dt as dt_util, slugify
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -163,7 +162,7 @@ class BirthdayEntity(Entity):
         return one_day_in_seconds - total_seconds_passed_today
 
     async def update_data(self, *_):
-        from datetime import date, timedelta
+        from datetime import date
 
         today = dt_util.start_of_local_day().date()
         next_birthday = date(today.year, self._date_of_birth.month, self._date_of_birth.day)
