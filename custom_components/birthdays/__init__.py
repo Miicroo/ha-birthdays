@@ -18,6 +18,8 @@ CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
+CONF_GLOBAL_CONFIG = 'config'
+CONF_BIRTHDAYS = 'birthdays'
 CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 DOMAIN = 'birthdays'
 
@@ -29,20 +31,47 @@ BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
 })
 
-CONFIG_SCHEMA = vol.Schema({
+GLOBAL_CONFIG_SCHEMA = vol.Schema({
+    vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
+})
+
+# Old schema (list of birthday configurations)
+OLD_CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.All(cv.ensure_list, [BIRTHDAY_CONFIG_SCHEMA])
 }, extra=vol.ALLOW_EXTRA)
+
+# New schema (supports both global and birthday configs)
+NEW_CONFIG_SCHEMA = vol.Schema({
+    DOMAIN: {
+        CONF_BIRTHDAYS: vol.All(cv.ensure_list, [BIRTHDAY_CONFIG_SCHEMA]),
+        vol.Optional(CONF_GLOBAL_CONFIG, default={}): GLOBAL_CONFIG_SCHEMA
+    }
+}, extra=vol.ALLOW_EXTRA)
+
+# Use vol.Any() to support both old and new schemas
+CONFIG_SCHEMA = vol.Schema(vol.Any(
+    OLD_CONFIG_SCHEMA,
+    NEW_CONFIG_SCHEMA
+), extra=vol.ALLOW_EXTRA)
 
 
 async def async_setup(hass, config):
     devices = []
 
-    for birthday_data in config[DOMAIN]:
+    is_new_config = isinstance(config[DOMAIN], dict) and config[DOMAIN].get(CONF_BIRTHDAYS) is not None
+    birthdays = config[DOMAIN][CONF_BIRTHDAYS] if is_new_config else config[DOMAIN]
+
+    for birthday_data in birthdays:
         unique_id = birthday_data.get(CONF_UNIQUE_ID)
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
         icon = birthday_data[CONF_ICON]
         attributes = birthday_data[CONF_ATTRIBUTES]
+        if is_new_config:
+            global_config = config[DOMAIN][CONF_GLOBAL_CONFIG]  # Empty dict or has attributes
+            global_attributes = global_config.get(CONF_ATTRIBUTES) or {}
+            attributes = dict(global_attributes, **attributes)  # Add global_attributes but let local attributes be on top
+
         devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
