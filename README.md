@@ -59,7 +59,7 @@ Fetching the attributes can be done using `state_attr` in a template, for instan
 
 ### Templated attributes
 Attributes to an entity can also be a template. To do calculations based on data from the entity, use the `this`-keyword.
-Be aware that templates that cannot be correctly parsed can lead to the entity not being loaded, 
+Be aware that if a template that cannot be correctly parse it can lead to the entity not being loaded, 
 so if your entity is suddenly gone after adding a templated attribute, please check the logs.
 
 Example calculating age in number of days:
