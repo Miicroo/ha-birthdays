@@ -57,6 +57,53 @@ You can add a unique id and custom attributes to each birthday, for instance to 
 To do this, add a dictionary under the `attributes` key in the configuration (see example above). The dictionary can contain any key-value pairs you want, and will be exposed as attributes on the entity.
 Fetching the attributes can be done using `state_attr` in a template, for instance `{{ state_attr('birthdays.einstein', 'occupation') }}` will return `Theoretical physicist`.
 
+### Templated attributes
+Attributes to an entity can also be a template. To do calculations based on data from the entity, use the `this`-keyword.
+Be aware that if a template that cannot be correctly parsed it can lead to the entity not being loaded, 
+so if your entity is suddenly gone after adding a templated attribute, please check the logs.
+
+Example calculating age in number of days:
+```yaml
+birthdays:
+  - name: 'Frodo Baggins'
+    date_of_birth: 1921-09-22
+    attributes:
+      days_since_birth: '{{ ((as_timestamp(now()) - as_timestamp(this.date_of_birth)) | int /60/1440) | int }}'
+```
+
+Properties of `this` that can be used:
+* name
+* unique_id
+* state
+* icon
+* date_of_birth
+* unit_of_measurement
+
+Note: Don't use `this.extra_state_attributes`, as that might trigger an infinite loop.
+
+### Global attributes:
+It is possible to add global attributes that will be added to all birthdays. Global attributes work just the same as other attributes,
+and can thus also be templated.
+
+This example will add the attribute `days_since_birth` on all entities:
+```yaml
+# Example configuration.yaml entry
+birthdays:
+  config:
+    attributes:
+      days_since_birth: '{{ ((as_timestamp(now()) - as_timestamp(this.date_of_birth)) | int /60/1440) | int }}'
+  birthdays:
+    - name: 'Frodo Baggins'
+      date_of_birth: 1921-09-22
+    - name: 'Bilbo Baggins'
+      date_of_birth: 1843-09-22
+    - name: Elvis
+      date_of_birth: 1935-01-08
+      icon: 'mdi:music'
+```
+
+Note that global attributes will be overridden by entity specific attributes.
+
 ## Automation
 All birthdays are updated at midnight, and when a birthday occurs an event is sent on the HA bus that can be used for automations. The event is called `birthday` and contains the data `name` and `age`. Note that there will be two events fired if two persons have the same birthday.
 

@@ -1,15 +1,14 @@
 import asyncio
 import logging
 
-import async_timeout
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_call_later
-from homeassistant.util import dt as dt_util
-from homeassistant.util import slugify
+from homeassistant.helpers.template import Template, is_template_string, render_complex
+from homeassistant.util import dt as dt_util, slugify
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,36 +17,64 @@ CONF_NAME = 'name'
 CONF_DATE_OF_BIRTH = 'date_of_birth'
 CONF_ICON = 'icon'
 CONF_ATTRIBUTES = 'attributes'
+CONF_GLOBAL_CONFIG = 'config'
+CONF_BIRTHDAYS = 'birthdays'
 CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
 DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_UNIQUE_ID): cv.string,
-    vol.Required(CONF_NAME) : cv.string,
-    vol.Required(CONF_DATE_OF_BIRTH) : cv.date,
-    vol.Optional(CONF_ICON, default = 'mdi:cake'): cv.string,
-    vol.Optional(CONF_ATTRIBUTES, default = {}) : vol.Schema({cv.string: cv.string}),
+    vol.Required(CONF_NAME): cv.string,
+    vol.Required(CONF_DATE_OF_BIRTH): cv.date,
+    vol.Optional(CONF_ICON, default='mdi:cake'): cv.string,
+    vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
 })
 
-CONFIG_SCHEMA = vol.Schema({
+GLOBAL_CONFIG_SCHEMA = vol.Schema({
+    vol.Optional(CONF_ATTRIBUTES, default={}): vol.Schema({cv.string: cv.string}),
+})
+
+# Old schema (list of birthday configurations)
+OLD_CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.All(cv.ensure_list, [BIRTHDAY_CONFIG_SCHEMA])
 }, extra=vol.ALLOW_EXTRA)
 
-async def async_setup(hass, config):
+# New schema (supports both global and birthday configs)
+NEW_CONFIG_SCHEMA = vol.Schema({
+    DOMAIN: {
+        CONF_BIRTHDAYS: vol.All(cv.ensure_list, [BIRTHDAY_CONFIG_SCHEMA]),
+        vol.Optional(CONF_GLOBAL_CONFIG, default={}): GLOBAL_CONFIG_SCHEMA
+    }
+}, extra=vol.ALLOW_EXTRA)
 
+# Use vol.Any() to support both old and new schemas
+CONFIG_SCHEMA = vol.Schema(vol.Any(
+    OLD_CONFIG_SCHEMA,
+    NEW_CONFIG_SCHEMA
+), extra=vol.ALLOW_EXTRA)
+
+
+async def async_setup(hass, config):
     devices = []
 
-    for birthday_data in config[DOMAIN]:
+    is_new_config = isinstance(config[DOMAIN], dict) and config[DOMAIN].get(CONF_BIRTHDAYS) is not None
+    birthdays = config[DOMAIN][CONF_BIRTHDAYS] if is_new_config else config[DOMAIN]
+
+    for birthday_data in birthdays:
         unique_id = birthday_data.get(CONF_UNIQUE_ID)
         name = birthday_data[CONF_NAME]
         date_of_birth = birthday_data[CONF_DATE_OF_BIRTH]
         icon = birthday_data[CONF_ICON]
         attributes = birthday_data[CONF_ATTRIBUTES]
+        if is_new_config:
+            global_config = config[DOMAIN][CONF_GLOBAL_CONFIG]  # Empty dict or has attributes
+            global_attributes = global_config.get(CONF_ATTRIBUTES) or {}
+            attributes = dict(global_attributes, **attributes)  # Add global_attributes but let local attributes be on top
+
         devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
 
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
-
 
     tasks = [asyncio.create_task(device.update_data()) for device in devices]
     await asyncio.wait(tasks)
@@ -64,7 +91,7 @@ class BirthdayEntity(Entity):
 
         if unique_id is not None:
             self._unique_id = slugify(unique_id)
-        else: 
+        else:
             self._unique_id = slugify(name)
 
         self._state = None
@@ -75,10 +102,15 @@ class BirthdayEntity(Entity):
         self._extra_state_attributes = {
             CONF_DATE_OF_BIRTH: str(self._date_of_birth),
         }
+        self._templated_attributes = {}
 
         if len(attributes) > 0 and attributes is not None:
-            for k,v in attributes.items():
-                self._extra_state_attributes[k] = v
+            for k, v in attributes.items():
+                if is_template_string(v):
+                    _LOGGER.info(f'{v} is a template and will be evaluated at runtime')
+                    self._templated_attributes[k] = Template(template=v, hass=hass)
+                else:
+                    self._extra_state_attributes[k] = v
 
     @property
     def name(self):
@@ -103,7 +135,15 @@ class BirthdayEntity(Entity):
 
     @property
     def extra_state_attributes(self):
+        for key, templated_value in self._templated_attributes.items():
+            value = render_complex(templated_value, variables={"this": self})
+            self._extra_state_attributes[key] = value
+
         return self._extra_state_attributes
+
+    @property
+    def date_of_birth(self):
+        return self._date_of_birth
 
     @property
     def unit_of_measurement(self):
@@ -117,12 +157,12 @@ class BirthdayEntity(Entity):
         one_day_in_seconds = 24 * 60 * 60
 
         now = dt_util.now()
-        total_seconds_passed_today = (now.hour*60*60) + (now.minute*60) + now.second
+        total_seconds_passed_today = (now.hour * 60 * 60) + (now.minute * 60) + now.second
 
         return one_day_in_seconds - total_seconds_passed_today
 
     async def update_data(self, *_):
-        from datetime import date, timedelta
+        from datetime import date
 
         today = dt_util.start_of_local_day().date()
         next_birthday = date(today.year, self._date_of_birth.month, self._date_of_birth.day)
@@ -130,12 +170,11 @@ class BirthdayEntity(Entity):
         if next_birthday < today:
             next_birthday = next_birthday.replace(year=today.year + 1)
 
-        days_until_next_birthday = (next_birthday-today).days
+        days_until_next_birthday = (next_birthday - today).days
 
         age = next_birthday.year - self._date_of_birth.year
         self._extra_state_attributes[CONF_AGE_AT_NEXT_BIRTHDAY] = age
 
-        
         self._state = days_until_next_birthday
 
         if days_until_next_birthday == 0:
