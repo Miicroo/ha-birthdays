@@ -14,6 +14,11 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 @pytest.fixture(autouse=True)
 def mock_translations():
-    translation = Translation(single_day_unit='day', multiple_days_unit='days')
-    with patch("custom_components.birthdays._get_translation", return_value=translation, autospec=True) as m:
+    """Mock translations globally."""
+    translation = Translation(single_day_unit="day", multiple_days_unit="days")
+    with patch(
+        "custom_components.birthdays._get_translation",
+        return_value=translation,
+        autospec=True,
+    ) as m:
         yield m
