@@ -1,0 +1,8 @@
+{
+    "config": {
+        "unit_of_measurement": {
+            "single_day": "day",
+            "multiple_days": "days"
+        }
+    }
+}
