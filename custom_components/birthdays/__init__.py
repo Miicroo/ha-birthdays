@@ -1,6 +1,6 @@
 import asyncio
-import logging
 from dataclasses import dataclass
+import logging
 
 import voluptuous as vol
 
