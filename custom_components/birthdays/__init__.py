@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 import logging
 
 import voluptuous as vol
@@ -8,6 +9,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template, is_template_string, render_complex
+from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util, slugify
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,11 +56,18 @@ CONFIG_SCHEMA = vol.Schema(vol.Any(
 ), extra=vol.ALLOW_EXTRA)
 
 
+@dataclass
+class Translation:
+    single_day_unit: str
+    multiple_days_unit: str
+
+
 async def async_setup(hass, config):
     devices = []
 
     is_new_config = isinstance(config[DOMAIN], dict) and config[DOMAIN].get(CONF_BIRTHDAYS) is not None
     birthdays = config[DOMAIN][CONF_BIRTHDAYS] if is_new_config else config[DOMAIN]
+    translation = await _get_translation(hass)
 
     for birthday_data in birthdays:
         unique_id = birthday_data.get(CONF_UNIQUE_ID)
@@ -69,13 +78,16 @@ async def async_setup(hass, config):
         if is_new_config:
             global_config = config[DOMAIN][CONF_GLOBAL_CONFIG]  # Empty dict or has attributes
             global_attributes = global_config.get(CONF_ATTRIBUTES) or {}
-            attributes = dict(global_attributes, **attributes)  # Add global_attributes but let local attributes be on top
+            attributes = dict(global_attributes,
+                              **attributes)  # Add global_attributes but let local attributes be on top
 
-        devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, hass))
+        devices.append(BirthdayEntity(unique_id, name, date_of_birth, icon, attributes, translation, hass))
 
+    # Set up component
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     await component.async_add_entities(devices)
 
+    # Update state
     tasks = [asyncio.create_task(device.update_data()) for device in devices]
     await asyncio.wait(tasks)
 
@@ -84,9 +96,25 @@ async def async_setup(hass, config):
     return True
 
 
+async def _get_translation(hass) -> Translation:
+    """Fetch the translated units of measurement and update each sensor."""
+    category = "config"
+    translations = await async_get_translations(hass,
+                                                language=hass.config.language,
+                                                category=category,
+                                                integrations=[DOMAIN])
+
+    base_key = f'component.{DOMAIN}.{category}.unit_of_measurement'
+
+    single_day_unit = translations.get(f'{base_key}.single_day', 'day')
+    multiple_days_unit = translations.get(f'{base_key}.multiple_days', 'days')
+
+    return Translation(single_day_unit=single_day_unit, multiple_days_unit=multiple_days_unit)
+
+
 class BirthdayEntity(Entity):
 
-    def __init__(self, unique_id, name, date_of_birth, icon, attributes, hass):
+    def __init__(self, unique_id, name, date_of_birth, icon, attributes, translation, hass):
         self._name = name
 
         if unique_id is not None:
@@ -111,6 +139,8 @@ class BirthdayEntity(Entity):
                     self._templated_attributes[k] = Template(template=v, hass=hass)
                 else:
                     self._extra_state_attributes[k] = v
+
+        self._translation: Translation = translation
 
     @property
     def name(self):
@@ -147,13 +177,16 @@ class BirthdayEntity(Entity):
 
     @property
     def unit_of_measurement(self):
-        return 'days'
+        return self._translation.single_day_unit \
+            if self._state is not None and self._state == 1 \
+            else self._translation.multiple_days_unit
 
     @property
     def hidden(self):
         return self._state is None
 
-    def _get_seconds_until_midnight(self):
+    @staticmethod
+    def _get_seconds_until_midnight():
         one_day_in_seconds = 24 * 60 * 60
 
         now = dt_util.now()
