@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import logging
 from datetime import date, datetime, timedelta
+import logging
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.core import HomeAssistant

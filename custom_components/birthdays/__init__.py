@@ -4,8 +4,8 @@ import logging
 
 import voluptuous as vol
 
+from homeassistant.const import Platform
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import (Platform)
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
