@@ -5,12 +5,16 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
+from homeassistant.const import (Platform)
+from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template, is_template_string, render_complex
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util, slugify
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +26,6 @@ CONF_ATTRIBUTES = 'attributes'
 CONF_GLOBAL_CONFIG = 'config'
 CONF_BIRTHDAYS = 'birthdays'
 CONF_AGE_AT_NEXT_BIRTHDAY = 'age_at_next_birthday'
-DOMAIN = 'birthdays'
 
 BIRTHDAY_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_UNIQUE_ID): cv.string,
@@ -92,6 +95,7 @@ async def async_setup(hass, config):
     await asyncio.wait(tasks)
 
     _LOGGER.debug(devices)
+    hass.async_create_task(async_load_platform(hass, Platform.CALENDAR, DOMAIN, {}, config))
 
     return True
 
